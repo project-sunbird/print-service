@@ -5,11 +5,8 @@ const uuidv1 = require('uuid/v1'),
     path = require('path'),
     config = require('../envVariables'),
     constants = require('../helpers/constants'),
-    requestDown = require('superagent'),
-    fs = require('fs'),
-    admZip = require('adm-zip');
-const DownloadParams = require('../helpers/DownloadParams')
-const TemplateProcessor = require('../helpers/TemplateProcessor')
+    DownloadParams = require('../helpers/DownloadParams'),
+    TemplateProcessor = require('../helpers/TemplateProcessor');
 
 
 
@@ -43,26 +40,27 @@ class PrintService {
                 const url = req.query.fileUrl;
                 if (!url)
                     this.sendClientError(res, { id: constants.apiIds.PRINT_API_ID });
-                
+
                 const page = await this.browser.newPage();
                 var dowloadParams = new DownloadParams(url)
                 var templateProcessor = new TemplateProcessor(dowloadParams)
-                var dataPromise=templateProcessor.processTemplate()
+                var dataPromise = templateProcessor.processTemplate()
                 dataPromise.then(async result => {
                     console.log("the index html file path got:", result)
                     await page.goto(result)
                     const pdfFilePath = this.pdfBasePath + uuidv1() + '.pdf';
                     await page.pdf({
-                        path: pdfFilePath, format: 'A4', printBackground: true});
+                        path: pdfFilePath, format: 'A4', printBackground: true
+                    });
                     await this.browser.close()
                     const destPath = 'print-service/' + path.basename(pdfFilePath);
                     const pdfUrl = await this.uploadBlob(this.config.azureAccountName, this.config.azureContainerName, destPath, pdfFilePath);
                     this.sendSuccess(res, { id: constants.apiIds.PRINT_API_ID }, { pdfUrl: pdfUrl, ttl: 600 });
-                }, function(err) {
+                }, function (err) {
                     console.log(err);
                     this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID });
                 })
-                
+
             } catch (error) {
                 console.error("Error:", error);
                 this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID });
