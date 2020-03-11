@@ -21,4 +21,5 @@ RUN fc-cache -f -v
 USER sunbird
 COPY --from=build --chown=sunbird /opt/print-service/ /home/sunbird/print-service/
 WORKDIR /home/sunbird/print-service/
-CMD ["node", "app.js", "&"]
+ENV  NODE_ENV production
+CMD ["node","app.js","&"]
