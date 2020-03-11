@@ -4,3 +4,4 @@ node_modules
 coverage
 .audit.json
 .DS_Store
+src/envVariables.js

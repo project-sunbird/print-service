@@ -1,39 +1,42 @@
-class DownloadParams{
-
-constructor(sourceUrl) {
-    this.sourceUrl = sourceUrl;
-}
-
- getDownloadPath() {
-    const fileName=this.getFileName()
-    const downloadPath= "conf/".concat(fileName)
-    console.log("Downloadpath forms:", downloadPath)
-    return downloadPath;
- }
+class DownloadParams {
 
 
-getSourceUrl(){
-    return this.sourceUrl;
-}
+    constructor(sourceUrl) {
+        this.sourceUrl = sourceUrl;
+        this.CERT_DOWNLOAD_FOLDER= "assests/"
+    }
 
-getFileExtractToPath(){
-    const extactToPath= "conf/".concat(this.getFileName().replace(".zip","/"))
-    console.log("DownloadParams:getFileExtractToPath got:",extactToPath)
-    return extactToPath
-}
-
-
-getHtmlPath(){
-    const htmlPath= "conf/".concat(this.getFileName().replace(".zip","/index.html"))
-    console.log("index.html file path is:", htmlPath)
-    return htmlPath;
+    getDownloadPath() {
+        console.log("dmdmd", this.CERT_DOWNLOAD_FOLDER)
+        const fileName = this.getFileName()
+        const downloadPath = this.CERT_DOWNLOAD_FOLDER.concat(fileName)
+        console.log("Downloadpath forms:", downloadPath)
+        return downloadPath;
+    }
 
 
-}
+    getSourceUrl() {
+        return this.sourceUrl;
+    }
 
-getFileName(){
-    return this.sourceUrl.substring(this.sourceUrl.lastIndexOf('/') + 1);
-}
+    getFileExtractToPath() {
+        const extactToPath = this.CERT_DOWNLOAD_FOLDER.concat(this.getFileName().replace(".zip", "/"))
+        console.log("DownloadParams:getFileExtractToPath got:", extactToPath)
+        return extactToPath
+    }
+
+
+    getHtmlPath() {
+        const htmlPath = this.CERT_DOWNLOAD_FOLDER.concat(this.getFileName().replace(".zip", "/index.html"))
+        console.log("index.html file path is:", htmlPath)
+        return htmlPath;
+
+
+    }
+
+    getFileName() {
+        return this.sourceUrl.substring(this.sourceUrl.lastIndexOf('/') + 1);
+    }
 
 }
 
