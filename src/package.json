@@ -5,6 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "adm-zip": "^0.4.14",
+    "async": "^3.2.0",
     "azure-storage": "^2.7.0",
     "body-parser": "~1.18.3",
     "cookie-parser": "~1.4.3",

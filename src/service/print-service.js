@@ -19,20 +19,31 @@ class PrintService {
                 if (!this.detectDebug()) {
                     this.browser = await puppeteer.launch({
                         executablePath: 'google-chrome-unstable',
-                        args: ['--disable-dev-shm-usage', '--no-sandbox', '--disable-setuid-sandbox', '--no-margins']
+                        args: ['--disable-dev-shm-usage', '--no-sandbox', '--disable-setuid-sandbox']
                     });
                 }
                 else {
                     this.browser = await puppeteer.launch({
-                        args: ['--disable-dev-shm-usage', '--no-sandbox', '--disable-setuid-sandbox']
+                        args: ['--disable-dev-shm-usage', '--no-sandbox', '--disable-setuid-sandbox','--disable-gpu']
                     });
                 }
+                this.browser.on('disconnected', async () => {
+                    await puppeteer.launch({
+                        executablePath: 'google-chrome-unstable',
+                        args: ['--disable-dev-shm-usage', '--no-sandbox', '--disable-setuid-sandbox']
+                    })
+                });
+
+
                 this.blobService = azure.createBlobService(this.config.azureAccountName, this.config.azureAccountKey);
             } catch (e) {
                 console.error(e);
             }
         })();
     }
+
+
+
 
     generate(req, res) {
         (async () => {
@@ -41,32 +52,35 @@ class PrintService {
                 if (!url)
                     this.sendClientError(res, { id: constants.apiIds.PRINT_API_ID });
 
-                const page = await this.browser.newPage();
                 var dowloadParams = new DownloadParams(url)
                 var templateProcessor = new TemplateProcessor(dowloadParams)
                 var dataPromise = templateProcessor.processTemplate()
                 dataPromise.then(async result => {
                     console.log("the index html file path got:", result)
-                    await page.goto("file://"+result)
+                    const page = await this.browser.newPage();
+                    await page.goto("file://"+result,{waitUntil: 'networkidle0'})
                     const pdfFilePath = this.pdfBasePath + uuidv1() + '.pdf';
                     await page.pdf({
                         path: pdfFilePath, format: 'A4', printBackground: true
                     });
-                    await this.browser.close()
+                    page.close()
                     const destPath = 'print-service/' + path.basename(pdfFilePath);
                     const pdfUrl = await this.uploadBlob(this.config.azureAccountName, this.config.azureContainerName, destPath, pdfFilePath);
                     this.sendSuccess(res, { id: constants.apiIds.PRINT_API_ID }, { pdfUrl: pdfUrl, ttl: 600 });
                 }, function (err) {
-                    console.log(err);
+                    console.log("error got:",err);
                     this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID });
-                })
+                 })
 
             } catch (error) {
-                console.error("Error:", error);
-                this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID });
+                console.error("Errors:", error);
+                throw(error)
             }
         })();
     }
+
+
+
 
     uploadBlob(accountName, container, destPath, pdfFilePath) {
         return new Promise((resolve, reject) => {

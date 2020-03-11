@@ -1,11 +1,5 @@
 
 
-
-
-
-
-
-
 const getAbsolutePath = (path) => {
     var fullpath = __dirname +"/"+path;
     console.log("absolute path of download zip is:",fullpath )

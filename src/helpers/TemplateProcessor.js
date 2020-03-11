@@ -43,14 +43,10 @@ class TemplateProcessor {
         }
         else {
             return new Promise(function (resolve, reject) {
-                resolve("file://"+htmlAbsFilePath);
+                resolve(htmlAbsFilePath);
             })
         }
     }
-
-
-
-
 
     checkFileExists(htmlAbsFilePath) {
         console.log("path got to check html", htmlAbsFilePath)
