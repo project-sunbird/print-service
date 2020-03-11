@@ -7,7 +7,6 @@ class DownloadParams {
     }
 
     getDownloadPath() {
-        console.log("dmdmd", this.CERT_DOWNLOAD_FOLDER)
         const fileName = this.getFileName()
         const downloadPath = this.CERT_DOWNLOAD_FOLDER.concat(fileName)
         console.log("Downloadpath forms:", downloadPath)

@@ -18,11 +18,7 @@ class FileExtactor {
         zip.extractAllTo(this.downloadParams.getFileExtractToPath(), true);
         console.log('finished unzip in secs:', Date.now() - startTime);
         callback(null,filemanager.getAbsolutePath(this.downloadParams.getHtmlPath()))
-    } 
-
-
-    
-
+    }
 }
 
 module.exports = FileExtactor;

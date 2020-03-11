@@ -47,7 +47,7 @@ class PrintService {
                 var dataPromise = templateProcessor.processTemplate()
                 dataPromise.then(async result => {
                     console.log("the index html file path got:", result)
-                    await page.goto(result)
+                    await page.goto("file://"+result)
                     const pdfFilePath = this.pdfBasePath + uuidv1() + '.pdf';
                     await page.pdf({
                         path: pdfFilePath, format: 'A4', printBackground: true
