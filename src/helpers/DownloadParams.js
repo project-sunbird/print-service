@@ -4,7 +4,7 @@ class DownloadParams {
 
     constructor(sourceUrl) {
         this.sourceUrl = sourceUrl;
-        this.CERT_DOWNLOAD_FOLDER= "assests/"
+        this.CERT_DOWNLOAD_FOLDER= "certs/"
     }
 
     getDownloadPath() {
