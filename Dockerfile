@@ -21,5 +21,6 @@ RUN fc-cache -f -v
 USER sunbird
 COPY --from=build --chown=sunbird /opt/print-service/ /home/sunbird/print-service/
 WORKDIR /home/sunbird/print-service/
+RUN mkdir /home/sunbird/print-service/certs
 ENV  NODE_ENV production
 CMD ["node","app.js","&"]
