@@ -12,7 +12,7 @@
     "express": "~4.16.0",
     "express-cluster": "0.0.5",
     "http-errors": "~1.6.2",
-    "morgan": "~1.9.0",
+    "log4js": "^4.0.2",
     "puppeteer": "2.0.0",
     "request": "2.87.0",
     "superagent": "^5.2.2",

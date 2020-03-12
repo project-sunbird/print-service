@@ -1,4 +1,4 @@
-
+const logger = require('../sdk/log4js');
 const request = require('superagent');
 const fs = require('fs');
 
@@ -13,11 +13,11 @@ class DownloadManager {
         request
             .get(this.downloadParams.getSourceUrl())
             .on('error', function (error) {
-                console.log(error);
+                logger.error("DownloadManager:downloadFile:",error);
             })
             .pipe(fs.createWriteStream(this.downloadParams.getDownloadPath()))
             .on('finish', function () {
-                console.log('finished dowloading');
+                logger.info('finished dowloading');
                 callback(null)
             });
         }

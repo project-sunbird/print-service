@@ -1,9 +1,8 @@
-
+const logger = require('../sdk/log4js');
 var async = require("async");
 var FileExtactor = require('./FileExtractor')
 var DownloadManager = require('./DownloadManager')
 const filemanager = require('../FileManager')
-
 const fs = require('fs')
 
 
@@ -31,11 +30,11 @@ class TemplateProcessor {
 
                 ], (err, result) => {
                     if (!err) {
-                        console.log("index.html file absolute path:", result)
+                        logger.info("TemplateProcessor:processTemplate:index.html file absolute path:", result)
                         resolve(result)
                     }
                     else {
-                        console.log("error occurred in processing template", err);
+                        logger.error("TemplateProcessor:processTemplate:index.html error occurred ",err);
                         throw (err)
                     }
                 });
@@ -50,10 +49,10 @@ class TemplateProcessor {
 
     checkFileExists(htmlAbsFilePath) {
         if (fs.existsSync(htmlAbsFilePath)) {
-            console.log('Found file in cache skip downloading..');
+            logger.info('TemplateProcessor:checkFileExixsts:Found file in cache skip downloading..');
             return true;
         }
-        console.log('No file found in cache!!');
+        logger.info('TemplateProcessor:checkFileExixsts:NO Found file in cache  downloading..');
         return false;
     }
 }

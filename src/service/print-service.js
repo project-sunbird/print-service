@@ -1,3 +1,4 @@
+const logger = require('../sdk/log4js');
 const uuidv1 = require('uuid/v1'),
     request = require('request'),
     puppeteer = require('puppeteer'),
@@ -7,12 +8,10 @@ const uuidv1 = require('uuid/v1'),
     constants = require('../helpers/constants'),
     DownloadParams = require('../helpers/DownloadParams'),
     TemplateProcessor = require('../helpers/TemplateProcessor'),
-    Request= require('../helpers/Request'),
+    Request = require('../helpers/Request'),
     HtmlGenerator = require('../generators/HtmlGenerator'),
     filemanager = require('../FileManager'),
-    serviceName= 'print-service/';
-
-
+    serviceName = 'print-service/';
 
 
 
@@ -26,14 +25,14 @@ class PrintService {
                 if (!this.detectDebug()) {
                     args = constants.argsConfig.PROD_MODE
                 }
-                console.log("the args got", args)
+                logger.info("PrintService:the puppeter args got", args)
                 this.browser = await puppeteer.launch(args);
                 this.browser.on('disconnected', async () => {
                     await puppeteer.launch(args)
                 });
                 this.blobService = azure.createBlobService(this.config.azureAccountName, this.config.azureAccountKey);
             } catch (e) {
-                console.error(e);
+                logger.error("error while launching puppeteer", e)
             }
         })();
     }
@@ -41,17 +40,17 @@ class PrintService {
     printPdf(req, res) {
         (async () => {
             try {
-                this.validateRequest(res,req.body.request)
+                this.validateRequest(res, req.body.request)
                 var request = this.getComposedRequest(req.body.request);
                 var dowloadParams = new DownloadParams(request.getHtmlTemplate())
                 var templateProcessor = new TemplateProcessor(dowloadParams)
                 var dataPromise = templateProcessor.processTemplate()
                 dataPromise.then(async htmlFilePath => {
-                    console.log("the index html file path got:", htmlFilePath)
+                    logger.info("PrintService:printPdg:the index html file got:", htmlFilePath)
                     var htmlGenerator = new HtmlGenerator(htmlFilePath, request);
-                    var mappedHtmlFilePath=htmlGenerator.generateTempHtmlFile()
+                    var mappedHtmlFilePath = htmlGenerator.generateTempHtmlFile()
                     const page = await this.browser.newPage();
-                    await page.goto("file://"+mappedHtmlFilePath,{waitUntil: 'networkidle0'})
+                    await page.goto("file://" + mappedHtmlFilePath, { waitUntil: 'networkidle0' })
                     const pdfFilePath = filemanager.getAbsolutePath(dowloadParams.getFileExtractToPath()) + request.getRequestId() + '.pdf';
                     await page.pdf({
                         path: pdfFilePath, format: 'A4', printBackground: true
@@ -60,19 +59,19 @@ class PrintService {
                     const destPath = serviceName + path.basename(pdfFilePath);
                     const pdfUrl = await this.uploadBlob(this.config.azureAccountName, this.config.azureContainerName, destPath, pdfFilePath);
                     this.sendSuccess(res, { id: constants.apiIds.PRINT_API_ID }, { pdfUrl: pdfUrl, ttl: 600 });
-                    this.sweepFiles([mappedHtmlFilePath,pdfFilePath])
+                    this.sweepFiles([mappedHtmlFilePath, pdfFilePath])
                 }, function (err) {
-                    console.log("error got:",err);
+                    logger.error("PrintService:error got:", err);
                     this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID });
-                 })
+                })
             } catch (error) {
-                console.error("Errors:", error);
+                logger.error("PrintService:Errors:", error);
                 this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID });
             }
         })();
     }
 
-    getComposedRequest(reqMap){
+    getComposedRequest(reqMap) {
         var requestId = uuidv1();
         var contextMap = reqMap.context;
         var htmlTemplate = reqMap.htmlTemplate;
@@ -80,14 +79,14 @@ class PrintService {
         return request;
     }
 
-    validateRequest(res,request){
-        if(!request){
+    validateRequest(res, request) {
+        if (!request) {
             console.log("invalid request", request)
             this.sendClientError(res, { id: constants.apiIds.PRINT_API_ID });
         }
     }
 
-    sweepFiles(filePathsArray){
+    sweepFiles(filePathsArray) {
         filemanager.deleteFiles(filePathsArray)
 
     }
@@ -97,20 +96,20 @@ class PrintService {
             try {
                 const url = req.query.fileUrl;
                 if (!url)
-                    this.sendClientError(res, { id: constants.apiIds.PRINT_API_ID  });
-            const page = await this.browser.newPage();
-            await page.goto(url);
-            const pdfFilePath = this.pdfBasePath + uuidv1() +'.pdf'
-            await page.pdf({path: pdfFilePath, format: 'A4'});
-            page.close();
-            const destPath = serviceName + path.basename(pdfFilePath);
-            const pdfUrl = await this.uploadBlob(this.config.azureAccountName, this.config.azureContainerName, destPath, pdfFilePath);
-            this.sendSuccess(res, { id: constants.apiIds.PRINT_API_ID }, { pdfUrl: pdfUrl, ttl: 600 });
-        } catch (error) {
-            console.error('Error: ',error);
-            this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID  });
-        }
-    })();
+                    this.sendClientError(res, { id: constants.apiIds.PRINT_API_ID });
+                const page = await this.browser.newPage();
+                await page.goto(url);
+                const pdfFilePath = this.pdfBasePath + uuidv1() + '.pdf'
+                await page.pdf({ path: pdfFilePath, format: 'A4', printBackground: true });
+                page.close();
+                const destPath = serviceName + path.basename(pdfFilePath);
+                const pdfUrl = await this.uploadBlob(this.config.azureAccountName, this.config.azureContainerName, destPath, pdfFilePath);
+                this.sendSuccess(res, { id: constants.apiIds.PRINT_API_ID }, { pdfUrl: pdfUrl, ttl: 600 });
+            } catch (error) {
+                console.error('Error: ', error);
+                this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID });
+            }
+        })();
     }
 
     uploadBlob(accountName, container, destPath, pdfFilePath) {
@@ -169,7 +168,7 @@ class PrintService {
     }
 
     detectDebug() {
-        console.log("running mode", process.env.NODE_ENV);
+        logger.info("app running mode", process.env.NODE_ENV);
         return (process.env.NODE_ENV !== 'production');
     }
 }

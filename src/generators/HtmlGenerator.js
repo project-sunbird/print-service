@@ -1,6 +1,8 @@
 const fs = require('fs');
 const Mapper = require('./Mapper')
 const encodingType = 'utf8';
+const logger = require('../sdk/log4js');
+
 
 class HtmlGenerator{
 
@@ -17,13 +19,13 @@ class HtmlGenerator{
     var mappedHtml = mapper.replacePlaceholders();
     var mappedHtmlFilePath = this.getReqIdHtmlFilePath();
     fs.writeFileSync(mappedHtmlFilePath,mappedHtml)
-    console.log("file written successfully in ms:", Date.now()-startTime)
+    logger.debug("HtmlGenerator:generateTempHtmlFile:file written successfully in ms:", Date.now()-startTime)
     return mappedHtmlFilePath;
     }
 
     getReqIdHtmlFilePath(){
     var tempHtmlFilePath = this.htmlFilePath.replace("index.html", this.request.getRequestId()+".html")
-    console.log("the temp filepath formed is", tempHtmlFilePath)
+    logger.info("HtmlGenerator:getReqIdHtmlFilePath:the temp filepath formed is", tempHtmlFilePath)
     return tempHtmlFilePath;
     }
 

@@ -29,7 +29,7 @@ module.exports.argsConfig = {
         executablePath: 'google-chrome-unstable',
         args: ['--disable-dev-shm-usage', '--no-sandbox', '--disable-setuid-sandbox']
     },
-    
+
     DEBUG_MODE:
     {
         args: ['--disable-dev-shm-usage', '--no-sandbox', '--disable-setuid-sandbox']

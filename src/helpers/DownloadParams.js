@@ -1,3 +1,4 @@
+const logger = require('../sdk/log4js');
 class DownloadParams {
 
 
@@ -9,7 +10,7 @@ class DownloadParams {
     getDownloadPath() {
         const fileName = this.getFileName()
         const downloadPath = this.CERT_DOWNLOAD_FOLDER.concat(fileName)
-        console.log("Downloadpath forms:", downloadPath)
+        logger.info("DownloadParams:getDownloadPath:Download path formed:", downloadPath)
         return downloadPath;
     }
 
@@ -20,14 +21,14 @@ class DownloadParams {
 
     getFileExtractToPath() {
         const extactToPath = this.CERT_DOWNLOAD_FOLDER.concat(this.getFileName().replace(".zip", "/"))
-        console.log("DownloadParams:getFileExtractToPath got:", extactToPath)
+        logger.info("DownloadParams:getFileExtractToPath got:", extactToPath)
         return extactToPath
     }
 
 
     getHtmlPath() {
         const htmlPath = this.CERT_DOWNLOAD_FOLDER.concat(this.getFileName().replace(".zip", "/index.html"))
-        console.log("index.html file path is:", htmlPath)
+        logger.info("DownloadParams:getHtmlPath:index.html file path is:", htmlPath)
         return htmlPath;
 
 

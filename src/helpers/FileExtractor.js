@@ -1,4 +1,4 @@
-
+const logger = require('../sdk/log4js');
 const admZip = require('adm-zip');
 const filemanager = require('../FileManager')
 
@@ -14,9 +14,9 @@ class FileExtactor {
     extractZipFile(callback) {
         const startTime = Date.now();
         var zip = new admZip(this.downloadParams.getDownloadPath());
-        console.log('start unzip at path', this.downloadParams.getFileExtractToPath());
+        logger.info('FileExtractor:extractZipFile:start unzip at path', this.downloadParams.getFileExtractToPath());
         zip.extractAllTo(this.downloadParams.getFileExtractToPath(), true);
-        console.log('finished unzip in secs:', Date.now() - startTime);
+        logger.debug('FileExtractor:extractZipFile:finished unzip in secs:', Date.now() - startTime);
         callback(null,filemanager.getAbsolutePath(this.downloadParams.getHtmlPath()))
     }
 }

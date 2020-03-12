@@ -1,4 +1,6 @@
 const fs = require('fs')
+const logger = require('./sdk/log4js');
+
 
 
 const getAbsolutePath = (path) => {
@@ -17,9 +19,9 @@ filePaths.forEach(element => {
 
 var deleteFile= function (err) {
     if (err) {
-        console.log("unlink failed", err);
+        logger.info("unlink failed", err);
     } else {
-        console.log("file deleted");
+        logger.info("file deleted");
     }
 }
 

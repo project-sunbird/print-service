@@ -1,11 +1,12 @@
 const express = require('express'),
   cluster = require('express-cluster'),
   cookieParser = require('cookie-parser'),
-  logger = require('morgan'),
+  logger = require('./sdk/log4js'),
   bodyParser = require('body-parser'),
   envVariables = require('./envVariables'),
   port = envVariables.port,
   threads = envVariables.threads;
+
 
   const createAppServer = () => {
     const app = express();
@@ -17,7 +18,6 @@ const express = require('express'),
       else next()
     })
     app.use(bodyParser.json({ limit: '1mb' }));
-    app.use(logger('dev'));
     app.use(express.json());
     app.use(bodyParser.urlencoded({ extended: false }));
     app.use(cookieParser());
