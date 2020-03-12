@@ -1,6 +1,6 @@
 const fs = require('fs');
 const Mapper = require('./Mapper')
-const ENCODING = 'utf8';
+const encodingType = 'utf8';
 
 class HtmlGenerator{
 
@@ -11,12 +11,13 @@ class HtmlGenerator{
 
 
     generateTempHtmlFile(){
-    var htmlFile = fs.readFileSync(this.htmlFilePath,ENCODING);
+    var startTime = Date.now();
+    var htmlFile = fs.readFileSync(this.htmlFilePath,encodingType);
     var mapper = new Mapper(htmlFile, this.request.getContextMap());
     var mappedHtml = mapper.replacePlaceholders();
     var mappedHtmlFilePath = this.getReqIdHtmlFilePath();
     fs.writeFileSync(mappedHtmlFilePath,mappedHtml)
-    console.log("file written successfully")
+    console.log("file written successfully in ms:", Date.now()-startTime)
     return mappedHtmlFilePath;
     }
 

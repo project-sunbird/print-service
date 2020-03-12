@@ -22,22 +22,14 @@ class PrintService {
             try {
                 this.config = config;
                 this.pdfBasePath = '/tmp/'
+                var args = constants.argsConfig.DEBUG_MODE
                 if (!this.detectDebug()) {
-                    this.browser = await puppeteer.launch({
-                        executablePath: 'google-chrome-unstable',
-                        args: ['--disable-dev-shm-usage', '--no-sandbox', '--disable-setuid-sandbox']
-                    });
+                    args = constants.argsConfig.PROD_MODE
                 }
-                else {
-                    this.browser = await puppeteer.launch({
-                        args: ['--disable-dev-shm-usage', '--no-sandbox', '--disable-setuid-sandbox','--disable-gpu']
-                    });
-                }
+                console.log("the args got", args)
+                this.browser = await puppeteer.launch(args);
                 this.browser.on('disconnected', async () => {
-                    await puppeteer.launch({
-                        executablePath: 'google-chrome-unstable',
-                        args: ['--disable-dev-shm-usage', '--no-sandbox', '--disable-setuid-sandbox']
-                    })
+                    await puppeteer.launch(args)
                 });
                 this.blobService = azure.createBlobService(this.config.azureAccountName, this.config.azureAccountKey);
             } catch (e) {

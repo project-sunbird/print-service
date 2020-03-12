@@ -49,12 +49,11 @@ class TemplateProcessor {
     }
 
     checkFileExists(htmlAbsFilePath) {
-        console.log("path got to check html", htmlAbsFilePath)
         if (fs.existsSync(htmlAbsFilePath)) {
-            console.log('Found file');
+            console.log('Found file in cache skip downloading..');
             return true;
         }
-        console.log('no file found');
+        console.log('No file found in cache!!');
         return false;
     }
 }
