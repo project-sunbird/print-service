@@ -6,7 +6,13 @@ const uuidv1 = require('uuid/v1'),
     config = require('../envVariables'),
     constants = require('../helpers/constants'),
     DownloadParams = require('../helpers/DownloadParams'),
-    TemplateProcessor = require('../helpers/TemplateProcessor');
+    TemplateProcessor = require('../helpers/TemplateProcessor'),
+    Request= require('../helpers/Request'),
+    HtmlGenerator = require('../generators/HtmlGenerator'),
+    filemanager = require('../FileManager'),
+    serviceName= 'print-service/';
+
+
 
 
 
@@ -33,8 +39,6 @@ class PrintService {
                         args: ['--disable-dev-shm-usage', '--no-sandbox', '--disable-setuid-sandbox']
                     })
                 });
-
-
                 this.blobService = azure.createBlobService(this.config.azureAccountName, this.config.azureAccountKey);
             } catch (e) {
                 console.error(e);
@@ -42,45 +46,80 @@ class PrintService {
         })();
     }
 
+    printPdf(req, res) {
+        (async () => {
+            try {
+                this.validateRequest(res,req.body.request)
+                var request = this.getComposedRequest(req.body.request);
+                var dowloadParams = new DownloadParams(request.getHtmlTemplate())
+                var templateProcessor = new TemplateProcessor(dowloadParams)
+                var dataPromise = templateProcessor.processTemplate()
+                dataPromise.then(async htmlFilePath => {
+                    console.log("the index html file path got:", htmlFilePath)
+                    var htmlGenerator = new HtmlGenerator(htmlFilePath, request);
+                    var mappedHtmlFilePath=htmlGenerator.generateTempHtmlFile()
+                    const page = await this.browser.newPage();
+                    await page.goto("file://"+mappedHtmlFilePath,{waitUntil: 'networkidle0'})
+                    const pdfFilePath = filemanager.getAbsolutePath(dowloadParams.getFileExtractToPath()) + request.getRequestId() + '.pdf';
+                    await page.pdf({
+                        path: pdfFilePath, format: 'A4', printBackground: true
+                    });
+                    page.close()
+                    const destPath = serviceName + path.basename(pdfFilePath);
+                    const pdfUrl = await this.uploadBlob(this.config.azureAccountName, this.config.azureContainerName, destPath, pdfFilePath);
+                    this.sendSuccess(res, { id: constants.apiIds.PRINT_API_ID }, { pdfUrl: pdfUrl, ttl: 600 });
+                    this.sweepFiles([mappedHtmlFilePath,pdfFilePath])
+                }, function (err) {
+                    console.log("error got:",err);
+                    this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID });
+                 })
+            } catch (error) {
+                console.error("Errors:", error);
+                this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID });
+            }
+        })();
+    }
 
+    getComposedRequest(reqMap){
+        var requestId = uuidv1();
+        var contextMap = reqMap.context;
+        var htmlTemplate = reqMap.htmlTemplate;
+        var request = new Request(contextMap, htmlTemplate, requestId);
+        return request;
+    }
 
+    validateRequest(res,request){
+        if(!request){
+            console.log("invalid request", request)
+            this.sendClientError(res, { id: constants.apiIds.PRINT_API_ID });
+        }
+    }
+
+    sweepFiles(filePathsArray){
+        filemanager.deleteFiles(filePathsArray)
+
+    }
 
     generate(req, res) {
         (async () => {
             try {
                 const url = req.query.fileUrl;
                 if (!url)
-                    this.sendClientError(res, { id: constants.apiIds.PRINT_API_ID });
-
-                var dowloadParams = new DownloadParams(url)
-                var templateProcessor = new TemplateProcessor(dowloadParams)
-                var dataPromise = templateProcessor.processTemplate()
-                dataPromise.then(async result => {
-                    console.log("the index html file path got:", result)
-                    const page = await this.browser.newPage();
-                    await page.goto("file://"+result,{waitUntil: 'networkidle0'})
-                    const pdfFilePath = this.pdfBasePath + uuidv1() + '.pdf';
-                    await page.pdf({
-                        path: pdfFilePath, format: 'A4', printBackground: true
-                    });
-                    page.close()
-                    const destPath = 'print-service/' + path.basename(pdfFilePath);
-                    const pdfUrl = await this.uploadBlob(this.config.azureAccountName, this.config.azureContainerName, destPath, pdfFilePath);
-                    this.sendSuccess(res, { id: constants.apiIds.PRINT_API_ID }, { pdfUrl: pdfUrl, ttl: 600 });
-                }, function (err) {
-                    console.log("error got:",err);
-                    this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID });
-                 })
-
-            } catch (error) {
-                console.error("Errors:", error);
-                throw(error)
-            }
-        })();
+                    this.sendClientError(res, { id: constants.apiIds.PRINT_API_ID  });
+            const page = await this.browser.newPage();
+            await page.goto(url);
+            const pdfFilePath = this.pdfBasePath + uuidv1() +'.pdf'
+            await page.pdf({path: pdfFilePath, format: 'A4'});
+            page.close();
+            const destPath = serviceName + path.basename(pdfFilePath);
+            const pdfUrl = await this.uploadBlob(this.config.azureAccountName, this.config.azureContainerName, destPath, pdfFilePath);
+            this.sendSuccess(res, { id: constants.apiIds.PRINT_API_ID }, { pdfUrl: pdfUrl, ttl: 600 });
+        } catch (error) {
+            console.error('Error: ',error);
+            this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID  });
+        }
+    })();
     }
-
-
-
 
     uploadBlob(accountName, container, destPath, pdfFilePath) {
         return new Promise((resolve, reject) => {
