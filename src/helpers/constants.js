@@ -19,7 +19,7 @@ module.exports.responseCodes = Object.freeze({
     NOT_FOUND: {
         name: 'RESOURCE_NOT_FOUND',
         code: 404
-    },
+    }
 })
 
 

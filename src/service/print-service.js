@@ -11,7 +11,9 @@ const uuidv1 = require('uuid/v1'),
     Request = require('../helpers/Request'),
     HtmlGenerator = require('../generators/HtmlGenerator'),
     filemanager = require('../FileManager'),
-    serviceName = 'print-service/';
+    serviceName = 'print-service/',
+    StorageParams = require('../helpers/StorageParams'),
+    util = require('util');
 
 
 
@@ -56,12 +58,12 @@ class PrintService {
                         path: pdfFilePath, format: 'A4', printBackground: true
                     });
                     page.close()
-                    const destPath = serviceName + path.basename(pdfFilePath);
-                    const pdfUrl = await this.uploadBlob(this.config.azureAccountName, this.config.azureContainerName, destPath, pdfFilePath);
+                    const destPath = request.getStorageParams().getPath() + path.basename(pdfFilePath);
+                    const pdfUrl = await this.uploadBlob(this.config.azureAccountName, request.getStorageParams().getContainerName(), destPath, pdfFilePath);
                     this.sendSuccess(res, { id: constants.apiIds.PRINT_API_ID }, { pdfUrl: pdfUrl, ttl: 600 });
                     this.sweepFiles([mappedHtmlFilePath, pdfFilePath])
                 }, function (err) {
-                    logger.error("PrintService:error got:", err);
+                    logger.error("PrintService:error got:", err); 
                     this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID });
                 })
             } catch (error) {
@@ -73,17 +75,44 @@ class PrintService {
 
     getComposedRequest(reqMap) {
         var requestId = uuidv1();
-        var contextMap = reqMap.context;
+        var contextMap = reqMap.context || {};
         var htmlTemplate = reqMap.htmlTemplate;
-        var request = new Request(contextMap, htmlTemplate, requestId);
+        var storageParams = this.getStorageDetails(reqMap);
+        var request = new Request(contextMap, htmlTemplate, requestId,storageParams);
         return request;
+    }
+
+
+    getStorageDetails(reqMap){
+    var storage = new StorageParams();
+    if(reqMap.storageParams!=null){    
+    storage.setPath(reqMap.storageParams.path ||  serviceName);
+    storage.setContainerName(reqMap.storageParams.containerName || this.config.azureContainerName);
+    logger.info("Print-service:getStorageDetails:storage params found in req got:", storage)
+    return storage;
+    }
+    storage.setContainerName(this.config.azureContainerName)
+    storage.setPath(serviceName)
+    logger.info("Print-service:getStorageDetails:storage params not found in req:", storage)
+    return storage;
     }
 
     validateRequest(res, request) {
         if (!request) {
-            console.log("invalid request", request)
-            this.sendClientError(res, { id: constants.apiIds.PRINT_API_ID });
+            logger.error("invalid provided request", request)
+            this.sendClientError(res, { id: constants.apiIds.PRINT_API_ID,params:this.getErrorParamsMap("request")});
         }
+        if(!request.htmlTemplate){
+            logger.error("invalid provided request htmltemplate is missing", request)
+            this.sendClientError(res, { id: constants.apiIds.PRINT_API_ID,params: this.getErrorParamsMap("request.htmlTemplate")});
+        }
+    }
+
+    getErrorParamsMap(missingField){
+        var map = {
+            "errmsg": util.format("Mandatory params %s is required.",missingField)
+        };
+        return map;
     }
 
     sweepFiles(filePathsArray) {
@@ -143,7 +172,7 @@ class PrintService {
     }
 
     sendClientError(res, options) {
-        const resObj = {
+        var resObj = {
             id: options.id,
             ver: options.ver || constants.apiIds.version,
             ts: new Date().getTime(),

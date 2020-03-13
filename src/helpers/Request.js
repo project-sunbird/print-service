@@ -2,14 +2,19 @@
 
 class Request {
 
-    constructor(contextMap, htmlTemplate, requestId) {
+    constructor(contextMap, htmlTemplate, requestId, storageParmas) {
         this.contextMap = contextMap;
         this.htmlTemplate = htmlTemplate;
         this.requestId = requestId;
+        this.storageParmas= storageParmas;
     }
 
     getContextMap() {
         return this.contextMap;
+    }
+
+    getStorageParams(){
+        return this.storageParmas;
     }
 
     getRequestId() {
