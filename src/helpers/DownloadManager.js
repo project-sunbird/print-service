@@ -2,6 +2,10 @@ const logger = require('../sdk/log4js');
 const request = require('superagent');
 const fs = require('fs');
 
+
+/**
+ * @author Anmol Gupta <anmol@ilimi.in>
+ */
 class DownloadManager {
 
     constructor(downloadParams) {
