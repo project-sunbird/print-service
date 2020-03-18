@@ -2,6 +2,12 @@ const logger = require('../sdk/log4js');
 const admZip = require('adm-zip');
 const filemanager = require('../FileManager')
 
+
+/**
+ * @author Anmol Gupta <anmol@ilimi.in>
+ */
+
+ 
 class FileExtactor {
 
     constructor(downloadParams) {

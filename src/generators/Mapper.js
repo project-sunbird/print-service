@@ -1,5 +1,10 @@
 var velocity = require('velocityjs');
 
+/**
+ * @author Anmol Gupta <anmol@ilimi.in>
+ */
+
+
 class Mapper{
 
     constructor(htmlFile,contextMap)

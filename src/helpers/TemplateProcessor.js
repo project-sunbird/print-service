@@ -7,6 +7,11 @@ const fs = require('fs')
 
 
 
+/**
+ * @author Anmol Gupta <anmol@ilimi.in>
+ */
+
+
 class TemplateProcessor {
 
     constructor(downloadParams) {

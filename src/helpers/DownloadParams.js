@@ -1,4 +1,9 @@
 const logger = require('../sdk/log4js');
+
+/**
+ * @author Anmol Gupta <anmol@ilimi.in>
+ */
+
 class DownloadParams {
 
 

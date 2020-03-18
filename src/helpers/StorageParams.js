@@ -1,3 +1,8 @@
+
+/**
+ * @author Anmol Gupta <anmol@ilimi.in>
+ */
+
 class StorageParams{
 
 constructor(){
