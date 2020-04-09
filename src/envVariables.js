@@ -9,6 +9,5 @@ const envVariables = {
   level: process.env.service_log_level || 'info',
   encodingType: process.env.service_encoding_type,
   filename: process.env.service_file_filename || 'print-service-%DATE%.log',
-
 }
 module.exports = envVariables;

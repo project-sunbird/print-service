@@ -16,7 +16,6 @@ const uuidv1 = require('uuid/v1'),
     util = require('util');
 
 
-
 class PrintService {
     constructor(config) {
         (async () => {
@@ -119,7 +118,8 @@ class PrintService {
         filemanager.deleteFiles(filePathsArray)
 
     }
-
+  
+  
     generate(req, res) {
         (async () => {
             try {

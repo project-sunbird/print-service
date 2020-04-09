@@ -7,7 +7,6 @@ const express = require('express'),
   port = envVariables.port,
   threads = envVariables.threads;
 
-
   const createAppServer = () => {
     const app = express();
     app.use((req, res, next) => {
