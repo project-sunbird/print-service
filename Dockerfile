@@ -17,8 +17,6 @@ RUN apt-get clean \
 RUN groupadd -r sunbird && useradd -r -g sunbird -G audio,video sunbird \
     && mkdir -p /home/sunbird/Downloads \
     && chown -R sunbird:sunbird /home/sunbird
-RUN apk add font-noto-gujarati font-noto-kannada font-noto-avestan font-noto-osage font-noto-kayahli font-noto-oriya font-noto-telugu font-noto-tamil font-noto-bengali font-noto-malayalam font-noto-arabic font-noto-extra \
-    && fc-cache -f
 RUN fc-cache -f -v
 USER sunbird
 COPY --from=build --chown=sunbird /opt/print-service/ /home/sunbird/print-service/
