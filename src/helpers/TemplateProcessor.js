@@ -14,23 +14,24 @@ const fs = require('fs')
 
 class TemplateProcessor {
 
-    constructor(downloadParams) {
+    constructor(downloadParams, fileExtension) {
         this.downloadParams = downloadParams;
+        this.fileExtension = fileExtension
     }
 
     processTemplate() {
         var downloadManager = new DownloadManager(this.downloadParams)
         var fileExtractor = new FileExtactor(this.downloadParams)
-        var htmlAbsFilePath = filemanager.getAbsolutePath(this.downloadParams.getHtmlPath())
+        var htmlAbsFilePath = filemanager.getAbsolutePath(this.downloadParams.getHtmlPath(this.fileExtension))
         var fileCheckResult = this.checkFileExists(htmlAbsFilePath)
         if(!fileCheckResult) {
             return new Promise(function (resolve, reject) {
                 async.waterfall([
                     (callback) => {
-                        downloadManager.downloadFile(callback);
+                        downloadManager.downloadFile(fileExtension, callback);
                     },
                     (callback2) => {
-                        fileExtractor.extractZipFile(callback2)
+                        fileExtractor.extractZipFile(fileExtension, callback2)
                     }
 
                 ], (err, result) => {

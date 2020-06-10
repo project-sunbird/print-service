@@ -13,13 +13,13 @@ class DownloadManager {
     }
 
 
-    downloadFile(callback) {
+    downloadFile(fileExtension, callback) {
         request
             .get(this.downloadParams.getSourceUrl())
             .on('error', function (error) {
                 logger.error("DownloadManager:downloadFile:",error);
             })
-            .pipe(fs.createWriteStream(this.downloadParams.getDownloadPath()))
+            .pipe(fs.createWriteStream(this.downloadParams.getDownloadPath(fileExtension)))
             .on('finish', function () {
                 logger.info('finished dowloading');
                 callback(null)
