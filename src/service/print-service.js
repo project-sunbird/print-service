@@ -47,7 +47,7 @@ class PrintService {
                 var request = this.getComposedRequest(req.body.request);
                 var dowloadParams = new DownloadParams(request.getHtmlTemplate())
                 var templateProcessor = new TemplateProcessor(dowloadParams, fileExtension)
-                var dataPromise = templateProcessor.processTemplate()
+                var dataPromise = templateProcessor.processTemplate(fileExtension)
                 dataPromise.then(async sourceFilePath => {
                     var htmlGenerator = new HtmlGenerator(sourceFilePath, request, fileExtension);
                     var mappedSourceFilePath = htmlGenerator.generateTempHtmlFile()

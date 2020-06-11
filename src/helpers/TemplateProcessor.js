@@ -14,15 +14,14 @@ const fs = require('fs')
 
 class TemplateProcessor {
 
-    constructor(downloadParams, fileExtension) {
+    constructor(downloadParams) {
         this.downloadParams = downloadParams;
-        this.fileExtension = fileExtension
     }
 
-    processTemplate() {
+    processTemplate(fileExtension) {
         var downloadManager = new DownloadManager(this.downloadParams)
         var fileExtractor = new FileExtactor(this.downloadParams)
-        var htmlAbsFilePath = filemanager.getAbsolutePath(this.downloadParams.getHtmlPath(this.fileExtension))
+        var htmlAbsFilePath = filemanager.getAbsolutePath(this.downloadParams.getHtmlPath(fileExtension))
         var fileCheckResult = this.checkFileExists(htmlAbsFilePath)
         if(!fileCheckResult) {
             return new Promise(function (resolve, reject) {
