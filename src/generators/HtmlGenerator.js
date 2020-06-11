@@ -9,9 +9,10 @@ const logger = require('../sdk/log4js');
  */
 class HtmlGenerator{
 
-    constructor(htmlFilePath, request){
+    constructor(htmlFilePath, request,fileExtension){
         this.htmlFilePath=htmlFilePath;
         this.request= request;
+        this.fileExtension = fileExtension;
     }
 
 
@@ -20,14 +21,14 @@ class HtmlGenerator{
     var htmlFile = fs.readFileSync(this.htmlFilePath,encodingType);
     var mapper = new Mapper(htmlFile, this.request.getContextMap());
     var mappedHtml = mapper.replacePlaceholders();
-    var mappedHtmlFilePath = this.getReqIdHtmlFilePath();
+    var mappedHtmlFilePath = this.getReqIdHtmlFilePath(this.fileExtension);
     fs.writeFileSync(mappedHtmlFilePath,mappedHtml)
     logger.debug("HtmlGenerator:generateTempHtmlFile:file written successfully in ms:", Date.now()-startTime)
     return mappedHtmlFilePath;
     }
 
     getReqIdHtmlFilePath(){
-    var tempHtmlFilePath = this.htmlFilePath.replace("index.html", this.request.getRequestId()+".html")
+    var tempHtmlFilePath = this.htmlFilePath.replace("index."+this.fileExtension, this.request.getRequestId()+"."+this.fileExtension)
     logger.info("HtmlGenerator:getReqIdHtmlFilePath:the temp filepath formed is", tempHtmlFilePath)
     return tempHtmlFilePath;
     }

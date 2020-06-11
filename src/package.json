@@ -18,7 +18,8 @@
     "superagent": "^5.2.2",
     "util": "^0.12.2",
     "uuid": "~3.2.1",
-    "velocityjs": "^2.0.0"
+    "velocityjs": "^2.0.0",
+    "svg2png": "^4.1.1"
   },
   "devDependencies": {},
   "scripts": {

@@ -14,6 +14,8 @@ const uuidv1 = require('uuid/v1'),
     serviceName = 'print-service/',
     StorageParams = require('../helpers/StorageParams'),
     util = require('util');
+    fs = require("fs");
+    svg2png = require("svg2png");
 
 
 class PrintService {
@@ -38,29 +40,56 @@ class PrintService {
         })();
     }
 
-    printPdf(req, res) {
+    printPdf(req, res, fileExtension) {
         (async () => {
             try {
                 this.validateRequest(res, req.body.request)
                 var request = this.getComposedRequest(req.body.request);
                 var dowloadParams = new DownloadParams(request.getHtmlTemplate())
-                var templateProcessor = new TemplateProcessor(dowloadParams)
-                var dataPromise = templateProcessor.processTemplate()
-                dataPromise.then(async htmlFilePath => {
-                    logger.info("PrintService:printPdg:the index html file got:", htmlFilePath)
-                    var htmlGenerator = new HtmlGenerator(htmlFilePath, request);
-                    var mappedHtmlFilePath = htmlGenerator.generateTempHtmlFile()
-                    const page = await this.browser.newPage();
-                    await page.goto("file://" + mappedHtmlFilePath, { waitUntil: 'networkidle0' })
-                    const pdfFilePath = filemanager.getAbsolutePath(dowloadParams.getFileExtractToPath()) + request.getRequestId() + '.pdf';
-                    await page.pdf({
-                        path: pdfFilePath, format: 'A4', printBackground: true
-                    });
-                    page.close()
-                    const destPath = request.getStorageParams().getPath() + path.basename(pdfFilePath);
-                    const pdfUrl = await this.uploadBlob(this.config.azureAccountName, request.getStorageParams().getContainerName(), destPath, pdfFilePath);
-                    this.sendSuccess(res, { id: constants.apiIds.PRINT_API_ID }, { pdfUrl: pdfUrl, ttl: 600 });
-                    this.sweepFiles([mappedHtmlFilePath, pdfFilePath])
+                var templateProcessor = new TemplateProcessor(dowloadParams, fileExtension)
+                var dataPromise = templateProcessor.processTemplate(fileExtension)
+                dataPromise.then(async sourceFilePath => {
+                    var htmlGenerator = new HtmlGenerator(sourceFilePath, request, fileExtension);
+                    var mappedSourceFilePath = htmlGenerator.generateTempHtmlFile()
+                    var destFilePath = '';
+                    if(fileExtension == 'html') {
+                        logger.info("PrintService:printPDF:the index html file got:", sourceFilePath)
+                        destFilePath = filemanager.getAbsolutePath(dowloadParams.getFileExtractToPath()) + request.getRequestId() + '.pdf';
+                        const page = await this.browser.newPage();
+                        await page.goto("file://" + mappedSourceFilePath, { waitUntil: 'networkidle0' })
+                        await page.pdf({
+                            path: destFilePath, format: 'A4', printBackground: true
+                        });
+                        page.close()
+                    } else if(fileExtension == 'svg') {
+                        logger.info("PrintService:printPNG:the index svg file got:", sourceFilePath)
+                        destFilePath = filemanager.getAbsolutePath(dowloadParams.getFileExtractToPath()) + request.getRequestId() + '.png';
+                        const fileOptions = {
+                            file: mappedSourceFilePath,
+                            includeFilename: true, // for external files for eg: images, fonts to render
+                            options: {
+                                filename: mappedSourceFilePath,
+                                width: 842,
+                                height: 593
+                            }
+                        }
+                        var input = fs.readFileSync(fileOptions.file)
+                        await svg2png(input, fileOptions.options)
+                            .then(buffer => {
+                                fs.writeFileSync(destFilePath, buffer)
+                            })
+                            .catch(e => console.error(`\n\n${e.stack}\n\n\n`));
+                    }
+                    const destPath = request.getStorageParams().getPath() + path.basename(destFilePath);
+                    const destFileUrl = await this.uploadBlob(this.config.azureAccountName, request.getStorageParams().getContainerName(), destPath, destFilePath);
+                    var uploadRes = {};
+                    if(fileExtension == 'html') {
+                        uploadRes = { pdfUrl: destFileUrl, ttl: 600 }
+                    } else if(fileExtension == 'svg') {
+                        uploadRes = { pngUrl: destFileUrl, ttl: 600 }
+                    }
+                    this.sendSuccess(res, { id: constants.apiIds.PRINT_API_ID }, uploadRes);
+                    this.sweepFiles([mappedSourceFilePath, destFilePath])
                 }, function (err) {
                     logger.error("PrintService:error got:", err); 
                     this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID });

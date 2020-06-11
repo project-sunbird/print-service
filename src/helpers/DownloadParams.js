@@ -31,9 +31,9 @@ class DownloadParams {
     }
 
 
-    getHtmlPath() {
-        const htmlPath = this.CERT_DOWNLOAD_FOLDER.concat(this.getFileName().replace(".zip", "/index.html"))
-        logger.info("DownloadParams:getHtmlPath:index.html file path is:", htmlPath)
+    getHtmlPath(fileExtension) {
+        const htmlPath = this.CERT_DOWNLOAD_FOLDER.concat(this.getFileName().replace(".zip", "/index." + fileExtension))
+        logger.info("DownloadParams:getHtmlPath:index." + fileExtension + " file path is:"+htmlPath)
         return htmlPath;
 
 
