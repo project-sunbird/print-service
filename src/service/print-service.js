@@ -32,6 +32,7 @@ class PrintService {
                     await puppeteer.launch(args)
                 });
                 this.blobService = azure.createBlobService(this.config.azureAccountName, this.config.azureAccountKey);
+                this.pvtBlobService = azure.createBlobService(this.config.privateContainer.azureAccountName, this.config.privateContainer.azureAccountKey);
             } catch (e) {
                 logger.error("error while launching puppeteer", e)
             }
@@ -58,7 +59,7 @@ class PrintService {
                     });
                     page.close()
                     const destPath = request.getStorageParams().getPath() + path.basename(pdfFilePath);
-                    const pdfUrl = await this.uploadBlob(this.config.azureAccountName, request.getStorageParams().getContainerName(), destPath, pdfFilePath);
+                    const pdfUrl = await this.uploadBlob(this.pvtBlobService, this.config.privateContainer.azureAccountName, request.getStorageParams().getContainerName(), destPath, pdfFilePath);
                     this.sendSuccess(res, { id: constants.apiIds.PRINT_API_ID }, { pdfUrl: pdfUrl, ttl: 600 });
                     this.sweepFiles([mappedHtmlFilePath, pdfFilePath])
                 }, function (err) {
@@ -86,11 +87,11 @@ class PrintService {
     var storage = new StorageParams();
     if(reqMap.storageParams!=null){    
     storage.setPath(reqMap.storageParams.path ||  serviceName);
-    storage.setContainerName(reqMap.storageParams.containerName || this.config.azureContainerName);
+    storage.setContainerName(reqMap.storageParams.containerName || this.config.privateContainer.azureContainerName);
     logger.info("Print-service:getStorageDetails:storage params found in req got:", storage)
     return storage;
     }
-    storage.setContainerName(this.config.azureContainerName)
+    storage.setContainerName(this.config.privateContainer.azureContainerName)
     storage.setPath(serviceName)
     logger.info("Print-service:getStorageDetails:storage params not found in req:", storage)
     return storage;
@@ -132,7 +133,7 @@ class PrintService {
                 await page.pdf({ path: pdfFilePath, format: 'A4', printBackground: true });
                 page.close();
                 const destPath = serviceName + path.basename(pdfFilePath);
-                const pdfUrl = await this.uploadBlob(this.config.azureAccountName, this.config.azureContainerName, destPath, pdfFilePath);
+                const pdfUrl = await this.uploadBlob(this.blobService, this.config.azureAccountName, this.config.azureContainerName, destPath, pdfFilePath);
                 this.sendSuccess(res, { id: constants.apiIds.PRINT_API_ID }, { pdfUrl: pdfUrl, ttl: 600 });
             } catch (error) {
                 console.error('Error: ', error);
@@ -141,9 +142,9 @@ class PrintService {
         })();
     }
 
-    uploadBlob(accountName, container, destPath, pdfFilePath) {
+    uploadBlob(blobService, accountName, container, destPath, pdfFilePath) {
         return new Promise((resolve, reject) => {
-            this.blobService.createBlockBlobFromLocalFile(container, destPath, pdfFilePath, function (error, result, response) {
+            blobService.createBlockBlobFromLocalFile(container, destPath, pdfFilePath, function (error, result, response) {
                 if (!error) {
                     const pdfUrl = 'https://' + accountName + '.blob.core.windows.net/' + container + '/' + destPath;
                     resolve(pdfUrl);
