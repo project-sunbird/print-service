@@ -43,6 +43,7 @@ class PrintService {
     printPdf(req, res) {
         (async () => {
             try {
+
                 this.validateRequest(res, req.body.request)
                 var request = this.getComposedRequest(req.body.request);
                 var dowloadParams = new DownloadParams(request.getHtmlTemplate())
