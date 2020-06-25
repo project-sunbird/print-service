@@ -53,7 +53,8 @@ class PrintService {
 			var htmlGenerator = new HtmlGenerator(htmlFilePath, request);
 			var mappedHtmlFilePath = htmlGenerator.generateTempHtmlFile()
 			const page = await this.browser.newPage();
-			await page.goto("file://" + mappedHtmlFilePath, { waitUntil: 'networkidle0' })
+			await page.setDefaultNavigationTimeout(0);
+			await page.goto("file://" + mappedHtmlFilePath)
 			const pdfFilePath = filemanager.getAbsolutePath(dowloadParams.getFileExtractToPath()) + request.getRequestId() + '.pdf';
 			await page.pdf({
 			    path: pdfFilePath, format: 'A4', printBackground: true
