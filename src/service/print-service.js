@@ -65,7 +65,7 @@ class PrintService {
                         await page.pdf({
                             path: pdfFilePath, format: 'A4', printBackground: true
                         });
-                        page.close()
+                        browser.close()
                         const destPath = request.getStorageParams().getPath() + path.basename(pdfFilePath);
                         const pdfUrl = await this.uploadBlob(this.pvtBlobService, this.config.privateContainer.azureAccountName, request.getStorageParams().getContainerName(), destPath, pdfFilePath);
                         this.sendSuccess(res, { id: constants.apiIds.PRINT_API_ID }, { pdfUrl: pdfUrl, ttl: 600 });
