@@ -29,7 +29,8 @@ class PrintService {
                 logger.info("PrintService:the puppeter args got", args)
                 this.browser = await puppeteer.launch(args);
                 this.browser.on('disconnected', async () => {
-                   this.browser = await puppeteer.launch(args)
+                    this.browser = await puppeteer.launch(args)
+                    logger.info("Started Puppeteer after crash");
                 });
                 this.blobService = azure.createBlobService(this.config.azureAccountName, this.config.azureAccountKey);
                 this.pvtBlobService = azure.createBlobService(this.config.privateContainer.azureAccountName, this.config.privateContainer.azureAccountKey);
@@ -48,30 +49,35 @@ class PrintService {
                 var templateProcessor = new TemplateProcessor(dowloadParams)
                 var dataPromise = templateProcessor.processTemplate()
                 dataPromise.then(async htmlFilePath => {
-		    try {
-			logger.info("PrintService:printPdg:the index html file got:", htmlFilePath)
-			var htmlGenerator = new HtmlGenerator(htmlFilePath, request);
-			var mappedHtmlFilePath = htmlGenerator.generateTempHtmlFile()
-			const page = await this.browser.newPage();
-			await page.setDefaultNavigationTimeout(0);
-			await page.goto("file://" + mappedHtmlFilePath)
-			const pdfFilePath = filemanager.getAbsolutePath(dowloadParams.getFileExtractToPath()) + request.getRequestId() + '.pdf';
-			await page.pdf({
-			    path: pdfFilePath, format: 'A4', printBackground: true
-			});
-			page.close()
-			const destPath = request.getStorageParams().getPath() + path.basename(pdfFilePath);
-			const pdfUrl = await this.uploadBlob(this.pvtBlobService, this.config.privateContainer.azureAccountName, request.getStorageParams().getContainerName(), destPath, pdfFilePath);
-			this.sendSuccess(res, { id: constants.apiIds.PRINT_API_ID }, { pdfUrl: pdfUrl, ttl: 600 });
-			this.sweepFiles([mappedHtmlFilePath, pdfFilePath])
-		    } catch (err) {
-			logger.error("PrintService:error after dataPromise got:", err); 
-			this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID });
-		    }
-		}).catch(function (err) {
-		    logger.error("PrintService:error in dataPromise got:", err); 
-		    this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID });
-		})
+                    try {
+                        logger.info("PrintService:printPdg:the index html file got:", htmlFilePath)
+                        var htmlGenerator = new HtmlGenerator(htmlFilePath, request);
+                        var mappedHtmlFilePath = htmlGenerator.generateTempHtmlFile()
+                        var args = constants.argsConfig.DEBUG_MODE
+                        if (!this.detectDebug()) {
+                            args = constants.argsConfig.PROD_MODE
+                        }
+                        const browser = await puppeteer.launch(args);
+                        const page = await browser.newPage();
+                        await page.setDefaultNavigationTimeout(0);
+                        await page.goto("file://" + mappedHtmlFilePath)
+                        const pdfFilePath = filemanager.getAbsolutePath(dowloadParams.getFileExtractToPath()) + request.getRequestId() + '.pdf';
+                        await page.pdf({
+                            path: pdfFilePath, format: 'A4', printBackground: true
+                        });
+                        page.close()
+                        const destPath = request.getStorageParams().getPath() + path.basename(pdfFilePath);
+                        const pdfUrl = await this.uploadBlob(this.pvtBlobService, this.config.privateContainer.azureAccountName, request.getStorageParams().getContainerName(), destPath, pdfFilePath);
+                        this.sendSuccess(res, { id: constants.apiIds.PRINT_API_ID }, { pdfUrl: pdfUrl, ttl: 600 });
+                        this.sweepFiles([mappedHtmlFilePath, pdfFilePath])
+                    } catch (err) {
+                        logger.error("PrintService:error after dataPromise got:", err);
+                        this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID });
+                    }
+                }).catch(function (err) {
+                    logger.error("PrintService:error in dataPromise got:", err);
+                    this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID });
+                })
             } catch (error) {
                 logger.error("PrintService:Errors:", error);
                 this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID });
@@ -84,39 +90,39 @@ class PrintService {
         var contextMap = reqMap.context || {};
         var htmlTemplate = reqMap.htmlTemplate;
         var storageParams = this.getStorageDetails(reqMap);
-        var request = new Request(contextMap, htmlTemplate, requestId,storageParams);
+        var request = new Request(contextMap, htmlTemplate, requestId, storageParams);
         return request;
     }
 
 
-    getStorageDetails(reqMap){
-    var storage = new StorageParams();
-    if(reqMap.storageParams!=null){    
-    storage.setPath(reqMap.storageParams.path ||  serviceName);
-    storage.setContainerName(reqMap.storageParams.containerName || this.config.privateContainer.azureContainerName);
-    logger.info("Print-service:getStorageDetails:storage params found in req got:", storage)
-    return storage;
-    }
-    storage.setContainerName(this.config.privateContainer.azureContainerName)
-    storage.setPath(serviceName)
-    logger.info("Print-service:getStorageDetails:storage params not found in req:", storage)
-    return storage;
+    getStorageDetails(reqMap) {
+        var storage = new StorageParams();
+        if (reqMap.storageParams != null) {
+            storage.setPath(reqMap.storageParams.path || serviceName);
+            storage.setContainerName(reqMap.storageParams.containerName || this.config.privateContainer.azureContainerName);
+            logger.info("Print-service:getStorageDetails:storage params found in req got:", storage)
+            return storage;
+        }
+        storage.setContainerName(this.config.privateContainer.azureContainerName)
+        storage.setPath(serviceName)
+        logger.info("Print-service:getStorageDetails:storage params not found in req:", storage)
+        return storage;
     }
 
     validateRequest(res, request) {
         if (!request) {
             logger.error("invalid provided request", request)
-            this.sendClientError(res, { id: constants.apiIds.PRINT_API_ID,params:this.getErrorParamsMap("request")});
+            this.sendClientError(res, { id: constants.apiIds.PRINT_API_ID, params: this.getErrorParamsMap("request") });
         }
-        if(!request.htmlTemplate){
+        if (!request.htmlTemplate) {
             logger.error("invalid provided request htmltemplate is missing", request)
-            this.sendClientError(res, { id: constants.apiIds.PRINT_API_ID,params: this.getErrorParamsMap("request.htmlTemplate")});
+            this.sendClientError(res, { id: constants.apiIds.PRINT_API_ID, params: this.getErrorParamsMap("request.htmlTemplate") });
         }
     }
 
-    getErrorParamsMap(missingField){
+    getErrorParamsMap(missingField) {
         var map = {
-            "errmsg": util.format("Mandatory params %s is required.",missingField)
+            "errmsg": util.format("Mandatory params %s is required.", missingField)
         };
         return map;
     }
@@ -125,8 +131,8 @@ class PrintService {
         filemanager.deleteFiles(filePathsArray)
 
     }
-  
-  
+
+
     generate(req, res) {
         (async () => {
             try {
