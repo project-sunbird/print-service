@@ -49,6 +49,7 @@ class PrintService {
                 var templateProcessor = new TemplateProcessor(dowloadParams)
                 var dataPromise = templateProcessor.processTemplate()
                 dataPromise.then(async htmlFilePath => {
+                    let browser;
                     try {
                         logger.info("PrintService:printPdg:the index html file got:", htmlFilePath)
                         var htmlGenerator = new HtmlGenerator(htmlFilePath, request);
@@ -57,7 +58,7 @@ class PrintService {
                         if (!this.detectDebug()) {
                             args = constants.argsConfig.PROD_MODE
                         }
-                        const browser = await puppeteer.launch(args);
+                        browser = await puppeteer.launch(args);
                         const page = await browser.newPage();
                         await page.setDefaultNavigationTimeout(0);
                         await page.goto("file://" + mappedHtmlFilePath)
@@ -65,7 +66,7 @@ class PrintService {
                         await page.pdf({
                             path: pdfFilePath, format: 'A4', printBackground: true
                         });
-                        browser.close()
+                    
                         const destPath = request.getStorageParams().getPath() + path.basename(pdfFilePath);
                         const pdfUrl = await this.uploadBlob(this.pvtBlobService, this.config.privateContainer.azureAccountName, request.getStorageParams().getContainerName(), destPath, pdfFilePath);
                         this.sendSuccess(res, { id: constants.apiIds.PRINT_API_ID }, { pdfUrl: pdfUrl, ttl: 600 });
@@ -73,6 +74,10 @@ class PrintService {
                     } catch (err) {
                         logger.error("PrintService:error after dataPromise got:", err);
                         this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID });
+                    } finally {
+                        if(browser){
+                            browser.close()
+                        }
                     }
                 }).catch(function (err) {
                     logger.error("PrintService:error in dataPromise got:", err);
