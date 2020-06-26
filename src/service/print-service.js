@@ -15,7 +15,6 @@ const uuidv1 = require('uuid/v1'),
     StorageParams = require('../helpers/StorageParams'),
     util = require('util');
 
-
 class PrintService {
     constructor(config) {
         (async () => {
