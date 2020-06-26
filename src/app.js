@@ -7,6 +7,7 @@ const express = require('express'),
   port = envVariables.port,
   threads = envVariables.threads;
 
+
   const createAppServer = () => {
     const app = express();
     app.use((req, res, next) => {
@@ -25,13 +26,15 @@ const express = require('express'),
     return app;
   }
 
-  if (process.env.node_env !== 'test') {
-    cluster((worker) => {
-      const app = createAppServer();
-      return app.listen(port, () => console.log(`print-service cluster is running on port ${port} with ${process.pid} pid`));
-    }, { count: threads });
-  } else {
-    const app = createAppServer();
-    app.listen(port, () => console.log(`print-service is running in test env on port ${port} with ${process.pid} pid`));
-  }
+  // if (process.env.node_env !== 'test') {
+  //   cluster((worker) => {
+  //     const app = createAppServer();
+  //     return app.listen(port, () => console.log(`print-service cluster is running on port ${port} with ${process.pid} pid`));
+  //   }, { count: threads });
+  // } else {
+  //   const app = createAppServer();
+  //   app.listen(port, () => console.log(`print-service is running in test env on port ${port} with ${process.pid} pid`));
+  // }
   
+  const app = createAppServer();
+  app.listen(port, () => console.log(`print-service cluster is running on port ${port} with ${process.pid} pid`));

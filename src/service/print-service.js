@@ -21,17 +21,9 @@ class PrintService {
             try {
                 this.config = config;
                 this.pdfBasePath = '/tmp/'
-                var args = constants.argsConfig.DEBUG_MODE
-                if (!this.detectDebug()) {
-                    args = constants.argsConfig.PROD_MODE
-                }
-                logger.info("PrintService:the puppeter args got", args)
-                this.browser = await puppeteer.launch(args);
-                this.browser.on('disconnected', async () => {
-                    this.browser = await puppeteer.launch(args)
-                    logger.info("Started Puppeteer after crash");
-                });
+
                 this.blobService = azure.createBlobService(this.config.azureAccountName, this.config.azureAccountKey);
+
                 this.pvtBlobService = azure.createBlobService(this.config.privateContainer.azureAccountName, this.config.privateContainer.azureAccountKey);
             } catch (e) {
                 logger.error("error while launching puppeteer", e)
@@ -58,15 +50,16 @@ class PrintService {
                         if (!this.detectDebug()) {
                             args = constants.argsConfig.PROD_MODE
                         }
+
                         browser = await puppeteer.launch(args);
                         const page = await browser.newPage();
-                        await page.setDefaultNavigationTimeout(0);
+                        page.setDefaultNavigationTimeout(0);
                         await page.goto("file://" + mappedHtmlFilePath)
                         const pdfFilePath = filemanager.getAbsolutePath(dowloadParams.getFileExtractToPath()) + request.getRequestId() + '.pdf';
                         await page.pdf({
                             path: pdfFilePath, format: 'A4', printBackground: true
                         });
-                    
+                        browser.close()
                         const destPath = request.getStorageParams().getPath() + path.basename(pdfFilePath);
                         const pdfUrl = await this.uploadBlob(this.pvtBlobService, this.config.privateContainer.azureAccountName, request.getStorageParams().getContainerName(), destPath, pdfFilePath);
                         this.sendSuccess(res, { id: constants.apiIds.PRINT_API_ID }, { pdfUrl: pdfUrl, ttl: 600 });
@@ -74,8 +67,7 @@ class PrintService {
                     } catch (err) {
                         logger.error("PrintService:error after dataPromise got:", err);
                         this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID });
-                    } finally {
-                        if(browser){
+                        if (browser) {
                             browser.close()
                         }
                     }
@@ -140,21 +132,31 @@ class PrintService {
 
     generate(req, res) {
         (async () => {
+            let browser;
             try {
                 const url = req.query.fileUrl;
                 if (!url)
                     this.sendClientError(res, { id: constants.apiIds.PRINT_API_ID });
-                const page = await this.browser.newPage();
+                var args = constants.argsConfig.DEBUG_MODE
+                if (!this.detectDebug()) {
+                    args = constants.argsConfig.PROD_MODE
+                }
+                browser = await puppeteer.launch(args);
+                const page = await browser.newPage();
+                page.setDefaultNavigationTimeout(0);
                 await page.goto(url);
                 const pdfFilePath = this.pdfBasePath + uuidv1() + '.pdf'
                 await page.pdf({ path: pdfFilePath, format: 'A4', printBackground: true });
-                page.close();
+                browser.close()
                 const destPath = serviceName + path.basename(pdfFilePath);
                 const pdfUrl = await this.uploadBlob(this.blobService, this.config.azureAccountName, this.config.azureContainerName, destPath, pdfFilePath);
                 this.sendSuccess(res, { id: constants.apiIds.PRINT_API_ID }, { pdfUrl: pdfUrl, ttl: 600 });
             } catch (error) {
                 console.error('Error: ', error);
                 this.sendServerError(res, { id: constants.apiIds.PRINT_API_ID });
+                if (browser) {
+                    browser.close()
+                }
             }
         })();
     }
