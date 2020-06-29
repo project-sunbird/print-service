@@ -36,5 +36,5 @@ const express = require('express'),
     app.listen(port, () => console.log(`print-service is running in test env on port ${port} with ${process.pid} pid`));
   }
   
-  const app = createAppServer();
-  app.listen(port, () => console.log(`print-service cluster is running on port ${port} with ${process.pid} pid`));
+  //const app = createAppServer();
+  //app.listen(port, () => console.log(`print-service cluster is running on port ${port} with ${process.pid} pid`));
