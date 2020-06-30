@@ -26,7 +26,7 @@ class PrintService {
                 // Create a cluster with 10 workers
                 this.puppeteerCluster = await Cluster.launch({
                     concurrency: Cluster.CONCURRENCY_CONTEXT,
-                    maxConcurrency: 4
+                    maxConcurrency: 10
                 });
                 // Define a task
                 await this.puppeteerCluster.task(async ({ page, data }) => {
