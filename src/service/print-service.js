@@ -25,7 +25,7 @@ class PrintService {
                 this.pvtBlobService = azure.createBlobService(this.config.privateContainer.azureAccountName, this.config.privateContainer.azureAccountKey);
                 // Create a cluster with 10 workers
                 this.puppeteerCluster = await Cluster.launch({
-                    concurrency: Cluster.CONCURRENCY_CONTEXT,
+                    concurrency: Cluster.CONCURRENCY_PAGE,
                     maxConcurrency: 10
                 });
                 // Define a task
