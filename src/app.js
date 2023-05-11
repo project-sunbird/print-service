@@ -1,7 +1,7 @@
 const express = require('express'),
   cluster = require('express-cluster'),
   cookieParser = require('cookie-parser'),
-  logger = require('morgan'),
+  logger = require('./sdk/log4js'),
   bodyParser = require('body-parser'),
   envVariables = require('./envVariables'),
   port = envVariables.port,
@@ -17,7 +17,6 @@ const express = require('express'),
       else next()
     })
     app.use(bodyParser.json({ limit: '1mb' }));
-    app.use(logger('dev'));
     app.use(express.json());
     app.use(bodyParser.urlencoded({ extended: false }));
     app.use(cookieParser());
@@ -32,7 +31,6 @@ const express = require('express'),
       return app.listen(port, () => console.log(`print-service cluster is running on port ${port} with ${process.pid} pid`));
     }, { count: threads });
   } else {
-    const app = createAppServer();
+     const app = createAppServer();
     app.listen(port, () => console.log(`print-service is running in test env on port ${port} with ${process.pid} pid`));
   }
-  
