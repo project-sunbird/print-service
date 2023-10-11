@@ -1,11 +1,11 @@
-FROM circleci/node:8.11.2-stretch as build
+FROM node:8.11.2-stretch as build
 MAINTAINER "Mahesh Kumar Gangula" "mahesh@ilimi.in"
 USER root
 COPY src /opt/print-service/
 WORKDIR /opt/print-service/
 #ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 RUN npm install --unsafe-perm
-FROM node:8.11-slim
+FROM node:8-buster-slim
 MAINTAINER "Mahesh Kumar Gangula" "mahesh@ilimi.in"
 RUN apt-get clean \
     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
