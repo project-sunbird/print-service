@@ -14,7 +14,7 @@ RUN apt-get update \
   && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-signing-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" \
 > /etc/apt/sources.list.d/google-chrome.list \
   && apt-get update \
-  && apt-get install -y google-chrome-unstable --no-install-recommends \
+  && apt-get install -y google-chrome-stable --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 RUN groupadd -r sunbird && useradd -r -g sunbird -G audio,video sunbird \
   && mkdir -p /home/sunbird/Downloads \
