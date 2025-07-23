@@ -23,10 +23,16 @@ class PrintService {
                 this.pdfBasePath = '/tmp/'
                 this.blobService = azure.createBlobService(this.config.azureAccountName, this.config.azureAccountKey);
                 this.pvtBlobService = azure.createBlobService(this.config.privateContainer.azureAccountName, this.config.privateContainer.azureAccountKey);
+                var args = constants.argsConfig.DEBUG_MODE
+                if (!this.detectDebug()) {
+                    args = constants.argsConfig.PROD_MODE
+                }
                 // Create a cluster with 10 workers
                 this.puppeteerCluster = await Cluster.launch({
                     concurrency: Cluster.CONCURRENCY_PAGE,
-                    maxConcurrency: 10
+                    maxConcurrency: 10,
+                    puppeteer,
+                    puppeteerOptions: args
                 });
                 // Define a task
                 await this.puppeteerCluster.task(async ({ page, data }) => {
