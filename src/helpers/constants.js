@@ -26,7 +26,7 @@ module.exports.responseCodes = Object.freeze({
 module.exports.argsConfig = {
 
     PROD_MODE: {
-        executablePath: '/usr/bin/google-chrome-unstable',
+        executablePath: 'google-chrome-unstable',
         args: ['--disable-dev-shm-usage', '--no-sandbox', '--disable-setuid-sandbox']
     },
 
